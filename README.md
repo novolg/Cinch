@@ -38,8 +38,8 @@ It runs entirely on your own machine. Nothing is uploaded anywhere.
 You need [Node.js](https://nodejs.org) 18.17 or newer.
 
 ```bash
-git clone https://github.com/novolg/cinch.git
-cd cinch
+git clone https://github.com/novolg/Cinch.git
+cd Cinch
 npm install
 npm start
 ```
