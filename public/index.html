@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Cinch — batch image compression for macOS. AVIF, WebP, MozJPEG and PNG palette, powered by libvips.">
+  <meta name="theme-color" content="#0f0e0d">
+  <title>Cinch — Batch Image Compression</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <header class="brand">
+        <img class="brand-mark" src="logo.png" width="34" height="34" alt="Cinch">
+        <span class="brand-text">
+          <span class="brand-name">Cinch</span>
+          <span class="brand-sub">Batch image compression</span>
+        </span>
+      </header>
+
+      <div class="sidebar-body">
+        <section class="panel">
+          <h2 class="panel-title">Presets</h2>
+          <div class="preset-list" role="radiogroup" aria-label="Optimization presets">
+            <button type="button" class="preset-btn active" data-preset="avif-ultra" role="radio" aria-checked="true">
+              <span class="preset-main">
+                <span class="preset-name">AVIF Ultra</span>
+                <span class="preset-desc">Smallest files, modern browsers</span>
+              </span>
+              <span class="preset-tag">AVIF</span>
+            </button>
+            <button type="button" class="preset-btn" data-preset="webp-balanced" role="radio" aria-checked="false">
+              <span class="preset-main">
+                <span class="preset-name">WebP Balanced</span>
+                <span class="preset-desc">Small files, works everywhere</span>
+              </span>
+              <span class="preset-tag">WEBP</span>
+            </button>
+            <button type="button" class="preset-btn" data-preset="mozjpeg" role="radio" aria-checked="false">
+              <span class="preset-main">
+                <span class="preset-name">MozJPEG Photo</span>
+                <span class="preset-desc">Detail-safe for photography</span>
+              </span>
+              <span class="preset-tag">JPEG</span>
+            </button>
+            <button type="button" class="preset-btn" data-preset="png-quant" role="radio" aria-checked="false">
+              <span class="preset-main">
+                <span class="preset-name">PNG Palette</span>
+                <span class="preset-desc">Flat UI graphics and icons</span>
+              </span>
+              <span class="preset-tag">PNG</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">Output</h2>
+
+          <div class="field">
+            <label for="formatSelect">Format</label>
+            <div class="select-wrap">
+              <select id="formatSelect" class="control">
+                <option value="avif" selected>AVIF</option>
+                <option value="webp">WebP</option>
+                <option value="jpeg">MozJPEG</option>
+                <option value="png">PNG</option>
+                <option value="original">Keep original</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+            </div>
+          </div>
+
+          <div class="field" id="qualityField">
+            <div class="field-head">
+              <label for="qualityRange">Quality</label>
+              <output id="qualityVal" class="readout" for="qualityRange">75</output>
+            </div>
+            <input type="range" id="qualityRange" min="1" max="100" value="75" class="slider">
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label for="effortRange">Compression effort</label>
+              <output id="effortVal" class="readout" for="effortRange">6</output>
+            </div>
+            <input type="range" id="effortRange" min="0" max="9" value="6" class="slider">
+            <p class="field-hint">Smaller files, slower encoding.</p>
+          </div>
+
+          <div class="field">
+            <label for="maxWidth">Maximum size</label>
+            <div class="size-pair">
+              <input type="number" id="maxWidth" min="1" placeholder="Width" class="control" aria-label="Maximum width in pixels">
+              <span class="size-x" aria-hidden="true">×</span>
+              <input type="number" id="maxHeight" min="1" placeholder="Height" value="1920" class="control" aria-label="Maximum height in pixels">
+            </div>
+            <p class="field-hint">Empty keeps original dimensions.</p>
+          </div>
+
+          <div class="switch-list">
+            <label class="switch-row" for="stripMetadata">
+              <span class="switch-text">
+                <span class="switch-name">Strip metadata</span>
+                <span class="switch-desc">Removes EXIF, GPS and ICC data</span>
+              </span>
+              <input type="checkbox" id="stripMetadata" checked>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="switch-row" for="losslessMode">
+              <span class="switch-text">
+                <span class="switch-name">Lossless</span>
+                <span class="switch-desc">Pixel-perfect, larger output</span>
+              </span>
+              <input type="checkbox" id="losslessMode">
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <footer class="sidebar-foot">
+        <button type="button" id="btnTestSingleGlobal" class="btn btn-ghost btn-block">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v6M8 11h6"/></svg>
+          <span class="btn-label">Preview first file</span>
+        </button>
+      </footer>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="toolbar">
+        <div class="tool-group">
+          <label class="btn btn-ghost">
+            <input type="file" id="fileInput" multiple accept="image/*" class="file-input">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+            Files
+          </label>
+          <label class="btn btn-ghost">
+            <input type="file" id="folderInput" webkitdirectory directory multiple class="file-input">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h3.4a2 2 0 0 1 1.6.8L12 6h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+            Folder
+          </label>
+        </div>
+
+        <div class="path-field">
+          <svg class="icon path-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h3.4a2 2 0 0 1 1.6.8L12 6h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+          <input type="text" id="localFolderPathInput" class="path-input" placeholder="Scan a folder on this Mac, e.g. /Users/admin/Pictures" aria-label="Folder path to scan">
+          <button type="button" id="btnScanFolder" class="btn btn-quiet btn-sm"><span class="btn-label">Scan</span></button>
+        </div>
+
+        <div class="tool-group">
+          <button type="button" id="btnOpenFinder" class="btn btn-ghost btn-icon" title="Reveal output folder in Finder" aria-label="Reveal output folder in Finder">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v16H4z"/><path d="M14 4h6v16h-6z"/><path d="M7 9v6M17 9v6"/></svg>
+          </button>
+          <button type="button" id="btnDownloadZip" class="btn btn-ghost hidden">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="m8 12 4 4 4-4"/><path d="M5 19h14"/></svg>
+            ZIP
+          </button>
+          <button type="button" id="btnProcessBatch" class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 13h6l-1 8 8-10h-6z"/></svg>
+            <span class="btn-label">Optimize</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <div id="dropzone" class="dropzone">
+          <div class="dropzone-inner">
+            <img class="dropzone-mark" src="logo.png" width="72" height="72" alt="">
+            <h2>Drop images or folders here</h2>
+            <p>Or add them from the toolbar above.</p>
+            <ul class="format-list">
+              <li>JPG</li><li>PNG</li><li>WebP</li><li>AVIF</li><li>HEIC</li><li>TIFF</li>
+            </ul>
+          </div>
+        </div>
+
+        <section id="resultsSection" class="results hidden" aria-label="File queue">
+          <div class="results-head">
+            <div class="results-title">
+              <h2>Queue</h2>
+              <span id="fileCountBadge" class="count">0</span>
+            </div>
+
+            <div id="statsSummary" class="summary hidden">
+              <div class="stat">
+                <span class="stat-label">Original</span>
+                <strong id="statOriginal" class="stat-value">0 MB</strong>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Optimized</span>
+                <strong id="statNew" class="stat-value">0 MB</strong>
+              </div>
+              <div class="stat stat-good">
+                <span class="stat-label">Saved</span>
+                <strong id="statSaved" class="stat-value">0 MB (0%)</strong>
+              </div>
+            </div>
+
+            <button type="button" id="btnClearQueue" class="btn btn-quiet btn-sm">Clear queue</button>
+          </div>
+
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">File</th>
+                  <th scope="col" class="num">Original</th>
+                  <th scope="col" class="num">Optimized</th>
+                  <th scope="col" class="num">Saved</th>
+                  <th scope="col">Status</th>
+                  <th scope="col"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="fileTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <footer id="progressBanner" class="progress hidden" aria-live="polite">
+        <div class="progress-row">
+          <span id="progressText" class="progress-text">Optimizing…</span>
+          <div class="progress-actions">
+            <span id="progressPercent" class="progress-percent">0%</span>
+            <button type="button" id="btnPauseBatch" class="btn btn-quiet btn-sm">
+              <span class="btn-label">Pause</span>
+            </button>
+            <button type="button" id="btnStopBatch" class="btn btn-danger btn-sm">
+              <span class="btn-label">Stop</span>
+            </button>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div id="progressBarFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- COMPARE MODAL -->
+  <div id="compareModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Quality comparison">
+    <div class="modal-panel">
+      <header class="modal-head">
+        <div class="modal-title">
+          <h2>Quality comparison</h2>
+          <p>Drag the handle to wipe. Scroll to zoom, drag to pan.</p>
+        </div>
+
+        <div class="zoom-bar">
+          <button type="button" id="btnZoomOut" class="zoom-btn" aria-label="Zoom out">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+          </button>
+          <span id="zoomLevelText" class="zoom-level">100%</span>
+          <button type="button" id="btnZoomIn" class="zoom-btn" aria-label="Zoom in">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
+          </button>
+          <button type="button" id="btnZoomReset" class="zoom-btn zoom-reset">Reset</button>
+        </div>
+
+        <button type="button" id="btnCloseModal" class="zoom-btn modal-close" aria-label="Close comparison">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="compare" id="compareWrapper">
+          <!-- Base layer: the optimized result -->
+          <div class="zoom-layer" id="zoomLayerOpt">
+            <img id="compareOptimizedImg" class="compare-img" src="" alt="Optimized image" draggable="false">
+          </div>
+
+          <!-- Screen-space clip revealing the original on the left -->
+          <div class="compare-clip" id="compareOverlayWrapper">
+            <div class="zoom-layer" id="zoomLayerOrig">
+              <img id="compareOriginalImg" class="compare-img" src="" alt="Original image" draggable="false">
+            </div>
+          </div>
+
+          <div class="compare-overlay" id="compareSliderOverlay">
+            <div class="compare-handle" id="compareHandle">
+              <span class="handle-line"></span>
+              <span class="handle-grip">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 8-4 4 4 4M14 8l4 4-4 4"/></svg>
+              </span>
+            </div>
+            <span class="compare-label label-left">Original</span>
+            <span class="compare-label label-right">Optimized</span>
+          </div>
+        </div>
+
+        <div id="compareStatsInfo" class="compare-stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

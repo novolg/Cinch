@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Runtime folders — recreated automatically on start
+output/
+uploads/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
+.env.*
+!.env.example
